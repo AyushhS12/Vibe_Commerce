@@ -5,9 +5,9 @@ import { ObjectId } from "mongodb";
 
 const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const db = await getClient();
-    const token = req.headers["set-cookie"];
+    const token = req.cookies.token.split(" ")[1] as string;
     if (token) {
-        const userId = jwt.decode(token[0])?.toString()
+        const userId = jwt.verify(token, process.env.JWT_SECRET!).toString()
         if (userId) {
             const user = await db.users.findOne({ _id: ObjectId.createFromHexString(userId) })
             if (user === null) {

@@ -31,11 +31,36 @@ app.get("/api/products", async (req, res) => {
     })
 })
 
-app.get("/api/cart", authMiddleware, (req, res) => {
-    const { productId, quantity } = req.body;
+app.post("/api/cart", async (req , res) => {
+    const token = req.cookies.token?.split(" ")[1];
+    const id = jwt.decode(token)?.toString()
+    const {product , quantity} = req.body
+    const db = await getClient()
+    const productId = (await db.products.insertOne(product)).insertedId
+    const doc = {productId,quantity}
+    const r = await db.cartItems.updateOne({userId:ObjectId.createFromHexString(id!)},{"$push":[doc]})
     res.json({
-        productId,
-        quantity
+        success:true,
+    })
+})
+
+app.get("/api/cart", authMiddleware, async (req, res) => {
+    const token = req.cookies.token?.split(" ")[1];
+    const id = jwt.decode(token)?.toString()
+    const db = await getClient()
+    const result = await db.cartItems.findOne({userId:ObjectId.createFromHexString(id!)})
+    const items:Product[] = [];
+    result?.products.forEach(async (i,x) => {
+        const product = await db.products.findOne({_id:x})
+        items.push(product!)
+    })
+    if(items.length === 0) {
+        res.json({
+            message:"cart is empty"
+        })
+    }
+    res.json({
+        "items":items
     })
 })
 
@@ -57,16 +82,25 @@ app.delete('/api/cart/:id', authMiddleware, async (req, res) => {
 
 })
 app.post('/api/checkout', async (req, res) => {
-    const { cartItems }: { [key: string]: Product[] } = req.body;
+    const { cartItems,quantity }: { [key: string]: Product[] | number } = req.body;
     const db = await getClient()
     const token = req.cookies.token.split(" ")[1]
     const user_id = jwt.decode(token[0])?.toString()
+    if (typeof cartItems === "number" || typeof quantity === "object"){
+        return res.json({
+            err:"Invalid data"
+        })
+    }
     const productIds = cartItems.map(c => c._id!)
     let totalPrice = 0
     cartItems.map(c => c.price).forEach((v) => {
         totalPrice += v
     })
-    const result = await db.transactions.insertOne({ _id: null, buyer: ObjectId.createFromHexString(user_id!), products: productIds, totalPrice })
+    const products = new Map()
+    productIds.forEach((x)=>{
+        products.set(x,quantity)
+    }) 
+    const result = await db.transactions.insertOne({ _id: null, buyer: ObjectId.createFromHexString(user_id!), products: , totalPrice })
     for (const item of cartItems) {
         await db.cartItems.deleteOne({ _id: item._id })
     }

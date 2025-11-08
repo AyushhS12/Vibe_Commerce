@@ -41,8 +41,13 @@ function Auth() {
                     email: formData.email,
                     password: formData.password,
                 });
+                if(res.data.err){
+                    toast.error(res.data.err as string)
+                    return
+                }
+                console.log(res.data)
                 auth.setValue(res.data)
-                localStorage.setItem("token", res.data.token);
+                localStorage.setItem("token", res.data.token || "");
                 toast.success("Login successful!");
                 navigate("/");
             } else {

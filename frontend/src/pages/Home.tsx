@@ -53,14 +53,15 @@ const API_URL = import.meta.env.VITE_API_URL as string;
 function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
   const navigate = useNavigate();
-  const authGuard = useAuthGuard()
-  const {value} = useAuth()
+  const authGuard = useAuthGuard();
+  const { value } = useAuth();
 
   // Fetch products on mount
   useEffect(() => {
-    authGuard()
-    setIsLoggedIn(value?.token?true:false)
+    authGuard();
+    setIsLoggedIn(value?.token ? true : false);
     const fetchProducts = async () => {
       try {
         const res = await axios.get(`${FAKE_STORE_API_URL}/products`);
@@ -83,15 +84,26 @@ function Home() {
     toast.info("Logged out successfully.");
   };
 
+  const handleQuantityChange = (id: number, change: number) => {
+    setQuantities((prev) => {
+      const newQty = Math.max((prev[id] || 1) + change, 1);
+      return { ...prev, [id]: newQty };
+    });
+  };
+
   const addToCart = async (product: Product) => {
     if (!isLoggedIn) {
       toast.warn("Please login before adding to cart");
       return;
     }
+    const quantity = quantities[product.id] || 1;
     try {
       // You can replace with your backend endpoint later
-      await axios.post(API_URL + "/api/cart", { productId: product.id });
-      toast.success(`${product.title} added to cart!`);
+      await axios.post(API_URL + "/api/cart", {
+        product,
+        quantity
+      });
+      toast.success(`${quantity} × ${product.title} added to cart!`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to add to cart.");
@@ -134,13 +146,13 @@ function Home() {
           ) : (
             <div className="flex space-x-2">
               <button
-                onClick={() => navigate("/auth",{state:"login"})}
+                onClick={() => navigate("/auth", { state: "login" })}
                 className="px-4 py-1 text-sm bg-indigo-600 text-white rounded-full hover:bg-indigo-700"
               >
                 Login
               </button>
               <button
-                onClick={() => navigate("/signup",{state:"signup"})}
+                onClick={() => navigate("/signup", { state: "signup" })}
                 className="px-4 py-1 text-sm border border-indigo-600 text-indigo-600 rounded-full hover:bg-indigo-50"
               >
                 Signup
@@ -181,6 +193,25 @@ function Home() {
                     <p className="text-gray-600 text-sm mb-3">
                       ₹{product.price.toFixed(2)}
                     </p>
+
+                    {/* Quantity Controls */}
+                    <div className="flex items-center space-x-3 mb-3">
+                      <button
+                        onClick={() => handleQuantityChange(product.id, -1)}
+                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        -
+                      </button>
+                      <span className="min-w-6 text-center">
+                        {quantities[product.id] || 1}
+                      </span>
+                      <button
+                        onClick={() => handleQuantityChange(product.id, 1)}
+                        className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
 
                   {/* Add to Cart Button */}
