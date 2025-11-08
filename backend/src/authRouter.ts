@@ -7,11 +7,12 @@ const authRouter = Router();
 authRouter.post("/login", async (req, res) => {
     const { email, password } = req.body;
     const client = await getClient()
-    client.users.findOne({ "email": email }).then((r) => {
+    await client.users.findOne({ "email": email }).then((r) => {
         const token = jwt.sign(r?._id!.toHexString()!, process.env.JWT_SECRET || "Aloha")
         res.cookie("token", token, { httpOnly: true, secure: true });
         res.status(200).json({
-            success: true
+            success: true,
+            token
         })
     })
         .catch(e => {
@@ -30,7 +31,7 @@ authRouter.post("/signup", async (req, res) => {
         .then(async (val) => {
             await client.cartItems.insertOne({ _id: null, userId: val.insertedId, products: [] })
                 .then((async value => {
-                    await client.users.updateOne({email:email},{"$set":{cart_id:value.insertedId}})
+                    await client.users.updateOne({ email: email }, { "$set": { cart_id: value.insertedId } })
                     res.status(200).json({
                         success: true,
                         message: "user created successfully"

@@ -87,7 +87,7 @@ PORT=3000
 
 Start the backend:
 ```bash
-npm run dev
+npm start
 ```
 
 ---
@@ -138,14 +138,6 @@ npm run dev
 | GET | `/api/cart` | Fetch cart (requires auth) |
 | DELETE | `/api/cart/:id` | Remove item from cart |
 | POST | `/api/checkout` | Checkout cart |
-
----
-
-## 💡 Future Improvements
-- 🧾 Order history
-- 📊 Product filtering and sorting
-- 💬 User reviews
-- 🪄 Admin dashboard
 
 ---
 

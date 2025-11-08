@@ -18,10 +18,10 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
                 next()
             }
         }
-        return res.json({
-            err: "Please Login again"
-        })
     }
+    return res.json({
+        err: "Please Login again"
+    })
 }
 
 export default authMiddleware

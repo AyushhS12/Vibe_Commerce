@@ -8,12 +8,19 @@ import authMiddleware from './middleware/middleware';
 import { ObjectId } from 'mongodb';
 import { Cart, Product } from './database/models';
 import cookieParser from 'cookie-parser';
+import cors from 'cors'
 
 const app = express()
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json())
 app.use(cookieParser())
+app.use(cors({
+    allowedHeaders: "*",
+    methods: ["GET", "POST", "DELETE"],
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true
+}))
 app.use("/api/auth", authRouter)
 
 app.get("/api/products", async (req, res) => {
@@ -38,11 +45,16 @@ app.delete('/api/cart/:id', authMiddleware, async (req, res) => {
     const token = req.cookies.token
     const user_id = jwt.decode(token[0])?.toString()
     if (user_id) {
-        db.cartItems.updateOne({ userId: ObjectId.createFromHexString(user_id) }, { "$pull": { products: [id] } })
+        const r = await db.cartItems.updateOne({ userId: ObjectId.createFromHexString(user_id) }, { "$pull": { products: [id] } })
+        res.status(200).json({
+            success:true,
+            "message": "product removed"
+        })
     }
-    res.json({
-        "message": id
+    res.status(500).json({
+        "err": "Internal Server Error"
     })
+
 })
 app.post('/api/checkout', async (req, res) => {
     const { cartItems }: { [key: string]: Product[] } = req.body;
