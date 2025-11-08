@@ -51,17 +51,16 @@ const API_URL = import.meta.env.VITE_API_URL as string;
 
 // --- MAIN COMPONENT ---
 function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const auth = useAuth();
+  const isLoggedIn = auth.isAuthenticated;
   const [products, setProducts] = useState<Product[]>([]);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const navigate = useNavigate();
   const authGuard = useAuthGuard();
-  const { value } = useAuth();
 
   // Fetch products on mount
   useEffect(() => {
     authGuard();
-    setIsLoggedIn(value?.token ? true : false);
     const fetchProducts = async () => {
       try {
         const res = await axios.get(`${FAKE_STORE_API_URL}/products`);
@@ -73,14 +72,11 @@ function Home() {
     };
     fetchProducts();
 
-    // Check login
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, [authGuard, value?.token]);
+    // no local state needed: `isLoggedIn` comes from context
+  }, [authGuard, isLoggedIn]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
+    auth.logout();
     toast.info("Logged out successfully.");
   };
 
@@ -99,10 +95,11 @@ function Home() {
     const quantity = quantities[product.id] || 1;
     try {
       // You can replace with your backend endpoint later
-      await axios.post(API_URL + "/api/cart", {
+      const res = await axios.post(API_URL + "/api/cart", {
         product,
         quantity
-      });
+      },{withCredentials:true});
+      console.log(res.headers.getSetCookie)
       toast.success(`${quantity} × ${product.title} added to cart!`);
     } catch (err) {
       console.error(err);

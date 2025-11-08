@@ -7,9 +7,10 @@ const authRouter = Router();
 authRouter.post("/login", async (req, res) => {
     const { email, password } = req.body;
     const client = await getClient()
-    await client.users.findOne({ "email": email , "password":password}).then((r) => {
+    await client.users.findOne({ email , password}).then((r) => {
         const token = jwt.sign(r?._id!.toHexString()!, process.env.JWT_SECRET || "Aloha")
-        const re = res.cookie("token", token, { httpOnly: true, secure: true , sameSite:"none"});
+        const secure = (process.env.ENVIRONMENT as string)==="development"?false:true
+        const re = res.cookie("token", token, { httpOnly: !secure, secure, sameSite:"lax"});
         re.status(200).json({
             success: true,
             token
@@ -17,7 +18,7 @@ authRouter.post("/login", async (req, res) => {
     })
         .catch(e => {
             console.log(e)
-            res.json({
+            res.status(404).json({
                 err: "User not found please try again"
             })
         })

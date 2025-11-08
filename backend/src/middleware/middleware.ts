@@ -5,6 +5,8 @@ import { ObjectId } from "mongodb";
 
 const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const db = await getClient();
+    
+    console.log(req.cookies)
     const token = req.cookies.token.split(" ")[1] as string;
     if (token) {
         const userId = jwt.verify(token, process.env.JWT_SECRET!).toString()
@@ -19,7 +21,7 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
             }
         }
     }
-    return res.json({
+    return res.status(401).json({
         err: "Please Login again"
     })
 }

@@ -45,9 +45,8 @@ function Auth() {
                     toast.error(res.data.err as string)
                     return
                 }
-                console.log(res.data)
-                auth.setValue(res.data)
-                localStorage.setItem("token", res.data.token || "");
+                // use AuthProvider helper so state + localStorage stay in sync
+                auth.login(res.data);
                 toast.success("Login successful!");
                 navigate("/");
             } else {

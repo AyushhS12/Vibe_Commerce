@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -34,8 +35,8 @@ function Cart() {
           setTotal(totalPrice);
         } else {
           // Option 2: If you fetch from backend (comment this out if not needed)
-          const res = await fetch(API_URL + "/api/cart", { credentials: "include" });
-          const data = await res.json();
+          const res = await axios.get(API_URL + "/api/cart", {withCredentials:true});
+          const data = await res.data;
           if(data.err){
             console.log(data.err)
             toast.error(data.err)
